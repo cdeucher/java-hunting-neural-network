@@ -15,6 +15,7 @@ public class NeuralNetwork {
     private int genomes_per_generation;
     private double random_mutation_probability;
     private double fits[];
+    private int current_genome = 0;
 
     public NeuralNetwork(int number_neurons[], double min_weight, double max_weight, int genomes_per_generation, double random_mutation_probability) {
         this.number_neurons = number_neurons;
@@ -96,6 +97,50 @@ public class NeuralNetwork {
 
     protected double[][][][] getSynapses() {
         return synapses;
+    }
+
+    public void setNeuronsValues(double inputs[]) {
+        // Copy inputs
+        for (int i = 0; i < number_neurons[0] - 1; i++) {
+            neurons[0][i] = inputs[i];
+        }
+
+        // Init the other neurons to 0
+        for (int i = 1; i < number_layers; i++) {
+            int m;
+            if (i + 1 != number_layers) {
+                m = number_neurons[i] - 1;
+            } else {
+                m = number_neurons[i];
+            }
+            for (int j = 0; j < m; j++) {
+                neurons[i][j] = 0;
+            }
+        }
+    }
+
+    void setneuronsVsSynapses() {
+        for(int i = 1; i < number_layers; i++) {
+            int m;
+            if(i != number_layers - 1) {
+                m = number_neurons[i] - 1;
+            }
+            else {
+                m = number_neurons[i];
+            }
+            for(int j = 0; j < m; j++) {
+                for(int k = 0; k < number_neurons[i - 1]; k++) {
+                    neurons[i][j] += neurons[i - 1][k] * synapses[current_genome][i - 1][k][j];
+                }
+
+                // Activation function
+                neurons[i][j] = sigmoid(neurons[i][j]);
+            }
+        }
+    }
+
+    public double[] getOutputs() {
+        return neurons[number_layers - 1];
     }
 
     private double sigmoid(double x) {
