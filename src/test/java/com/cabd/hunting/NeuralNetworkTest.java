@@ -1,8 +1,10 @@
 package com.cabd.hunting;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -19,10 +21,18 @@ public class NeuralNetworkTest {
     private double inputs[];
 
     private NeuralNetwork rnn;
+    private NeuralNetworkBuilder builder = new NeuralNetworkBuilder();
+    private SaveLoad saveLoad = Mockito.mock(SaveLoad.class);
 
     @Before
     public void setUp() {
-        rnn = new NeuralNetwork(neurons_amount, min_weight, max_weight, genomes_per_generation, random_mutation_probability);
+        rnn = builder.setMaxWeight(max_weight)
+               .setMinWeigh(min_weight)
+               .setNumberNeurons(neurons_amount)
+               .setGenomesPerGeneration(genomes_per_generation)
+               .setRandomMutationProbability(random_mutation_probability)
+               .setSaveLoad(saveLoad)
+               .getRNN();
         inputs = new double[]{130, 120};
     }
 
@@ -33,12 +43,56 @@ public class NeuralNetworkTest {
 
     @Test
     public void whenSetNeuronsValues_ShouldPopulateNeuronsWithRealValues() {
-        rnn.setNeuronsValues(inputs);
-        rnn.setneuronsVsSynapses();
+        rnn.learn(inputs);
 
         assertEquals(1, rnn.getOutputs().length);
         assertFalse(rnn.getOutputs()[0] == 0);
     }
 
+    @Test
+    public void whenCreateNewGeneration_ShouldPopulateTheGeneration() {
+        rnn.learn(inputs);
+        rnn.newGenome(0);
 
+        assertEquals(1, rnn.getCurrentGenome());
+    }
+
+    @Test
+    public void whenCreateMultiplesGenerations_ShouldPopulateAllGenerations() {
+        rnn.learn(inputs);
+        rnn.newGenome(0);
+        rnn.newGenome(0);
+        assertEquals(2, rnn.getCurrentGenome());
+    }
+
+    @Test
+    public void whenCreateNewGenome_ShouldUpdateSynapses() {
+        double[][] output = new double[2][];
+        rnn.learn(inputs);
+        output[0] = rnn.getOutputs().clone();
+
+        rnn.newGenome(0.1);
+        rnn.learn(inputs);
+        output[1] = rnn.getOutputs();
+
+        assertFalse ( Arrays.equals(output[0],output[1]) ); ;
+    }
+
+    @Test
+    public void whenCreateGenomesAndApplyCrossover_ShouldUpdateSynapsesAndGenomesOrder() {
+        double[][] firstSynapse = new double[2][];
+        rnn.learn(inputs);
+        firstSynapse[0] = rnn.getSynapses(0,0, 0).clone();
+
+        rnn.newGenome(0.1);
+        rnn.learn(inputs);
+        rnn.newGenome(0.1);
+        rnn.learn(inputs);
+        rnn.newGenome(0.5);
+        rnn.learn(inputs);
+
+        firstSynapse[1] = rnn.getSynapses(0,0, 0).clone();
+
+        assertFalse ( Arrays.equals(firstSynapse[0],firstSynapse[1]) ); ;
+    }
 }
