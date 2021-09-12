@@ -12,6 +12,8 @@ public interface RnnBuilder {
 
     NeuralNetworkBuilder setRandomMutationProbability(double random_mutation_probability);
 
+    NeuralNetworkBuilder setCrossOverRate(double crossOverRate);
+
     NeuralNetworkBuilder setSaveLoad(SaveLoad saveLoad);
 
     NeuralNetwork getRNN();

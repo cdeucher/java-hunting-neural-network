@@ -6,7 +6,8 @@ public class NeuralNetworkBuilder implements RnnBuilder{
     private double min_weight;
     private double max_weight;
     private int genomes_per_generation;
-    private double random_mutation_probability;
+    private double randomMutationProbability = 0.5;
+    private double crossOverRate = 0.2;
     private SaveLoad saveLoad;
 
     @Override
@@ -35,7 +36,13 @@ public class NeuralNetworkBuilder implements RnnBuilder{
 
     @Override
     public NeuralNetworkBuilder setRandomMutationProbability(double random_mutation_probability) {
-        this.random_mutation_probability = random_mutation_probability;
+        this.randomMutationProbability = random_mutation_probability;
+        return this;
+    }
+
+    @Override
+    public NeuralNetworkBuilder setCrossOverRate(double crossOverRate) {
+        this.crossOverRate = crossOverRate;
         return this;
     }
 
@@ -47,7 +54,7 @@ public class NeuralNetworkBuilder implements RnnBuilder{
 
     @Override
     public NeuralNetwork getRNN() {
-        return new NeuralNetwork(number_neurons, min_weight, max_weight, genomes_per_generation, random_mutation_probability, saveLoad);
+        return new NeuralNetwork(number_neurons, min_weight, max_weight, genomes_per_generation, randomMutationProbability, crossOverRate, saveLoad);
     }
 
 

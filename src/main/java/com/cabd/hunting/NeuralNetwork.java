@@ -11,6 +11,7 @@ import static java.lang.Math.exp;
 
 public class NeuralNetwork {
 
+    private static double CrossOverRate;
     public int number_neurons[];
     public double synapses[][][][];
     private double min_weight, max_weight;
@@ -18,19 +19,20 @@ public class NeuralNetwork {
     public int number_layers;
 
     public int genomes_per_generation;
-    private double random_mutation_probability;
+    private double randomMutationProbability;
     private double fits[];
     private int current_genome = 0;
 
     private SaveLoad saveLoad;
 
-    public NeuralNetwork(int number_neurons[], double min_weight, double max_weight, int genomes_per_generation, double random_mutation_probability, SaveLoad saveLoad) {
+    public NeuralNetwork(int number_neurons[], double min_weight, double max_weight, int genomes_per_generation, double randomMutationProbability, double CrossOverRate, SaveLoad saveLoad) {
         this.number_neurons = number_neurons;
         this.min_weight = min_weight;
         this.max_weight = max_weight;
 
         this.genomes_per_generation = genomes_per_generation;
-        this.random_mutation_probability = random_mutation_probability;
+        this.randomMutationProbability = randomMutationProbability;
+        this.CrossOverRate = CrossOverRate;
 
         this.number_layers = number_neurons.length;
         this.neurons = new double[number_layers][];
@@ -39,10 +41,10 @@ public class NeuralNetwork {
         this.saveLoad.setRnn(this);
 
         generateNeurons();
+        generateFits();
         setBias();
         initSynapsesEmpty();
-        initSynapsesRandomly();
-        generateFits();
+        initSynapsesRandomlyOrLoadTheBestGeneration();
     }
 
     private void generateNeurons() {
@@ -146,15 +148,15 @@ public class NeuralNetwork {
                 }
             }
         }
-        try {
-            saveLoad.saveToFile();
-        }
-        catch(FileNotFoundException | UnsupportedEncodingException ex) {
-            Logger.getLogger(NeuralNetwork.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        try {
+//            saveLoad.saveToFile();
+//        }
+//        catch(FileNotFoundException | UnsupportedEncodingException ex) {
+//            Logger.getLogger(NeuralNetwork.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
-    protected void initSynapsesRandomly() {
+    protected void initSynapsesRandomlyOrLoadTheBestGeneration() {
         if(saveLoad.fileExists()) {
             try {
                 saveLoad.loadFromFile();
@@ -197,20 +199,28 @@ public class NeuralNetwork {
         fits = new double[genomes_per_generation];
     }
 
+    protected double getFits(int generation){
+        return fits[generation];
+    }
+
+    protected void setFits(int generation, double value){
+        fits[generation] = value;
+    }
+
     private void newGeneration() {
-        boolean no_progress = true;
+        boolean hasProgress = false;
 
         for(int i = 0; i < genomes_per_generation; i++) {
-            if(fits[i] != 0) {
-                no_progress = false;
+            if(fits[i] > 0) {
+                hasProgress = true;
                 break;
             }
         }
 
-        if(no_progress) {
-            initSynapsesRandomly();
-        }else {
+        if(hasProgress) {
             initSynapsesCrossover();
+        }else {
+            initSynapsesRandomlyOrLoadTheBestGeneration();
         }
     }
 
@@ -232,14 +242,14 @@ public class NeuralNetwork {
                     }
                     for(int synapse = 0; synapse < m; synapse++) {
                         // If this genome made any progress, mix it with the first genome or generate a new number randomly or keep the current value
-                        if(fits[genome] != 0) {
+                        if(fits[genome] > 0) {
                             prob_rand = randDouble(0, 1);
-                            if(prob_rand < random_mutation_probability) {
+                            if(prob_rand < randomMutationProbability) {
                                 synapses[genome][layer][neuron][synapse] = randDouble(min_weight, max_weight);
                             }
                             else {
                                 prob_rand = randDouble(0, 1);
-                                if(prob_rand < 0.5) {
+                                if(prob_rand < CrossOverRate) {
                                     synapses[genome][layer][neuron][synapse] = synapses[0][layer][neuron][synapse];
                                 }
                                 // Else keep the current value (implicit)
@@ -248,7 +258,7 @@ public class NeuralNetwork {
                         // Else mix it with the first genome or generate a new number randomly
                         else {
                             prob_rand = randDouble(0, 1);
-                            if(prob_rand < random_mutation_probability) {
+                            if(prob_rand < randomMutationProbability) {
                                 synapses[genome][layer][neuron][synapse] = randDouble(min_weight, max_weight);
                             }
                             else {

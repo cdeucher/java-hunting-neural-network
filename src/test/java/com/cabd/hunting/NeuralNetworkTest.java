@@ -14,10 +14,9 @@ public class NeuralNetworkTest {
     private final int neurons_amount[] = {2, 2, 1};
     private final int min_weight = -1;
     private final int max_weight = 1;
-
     private final int genomes_per_generation = 3;
     private final double random_mutation_probability = 0.5;
-
+    private final double crossOverRate = 0.2;
     private double inputs[];
 
     private NeuralNetwork rnn;
@@ -31,6 +30,7 @@ public class NeuralNetworkTest {
                .setNumberNeurons(neurons_amount)
                .setGenomesPerGeneration(genomes_per_generation)
                .setRandomMutationProbability(random_mutation_probability)
+               .setCrossOverRate(crossOverRate)
                .setSaveLoad(saveLoad)
                .getRNN();
         inputs = new double[]{130, 120};
