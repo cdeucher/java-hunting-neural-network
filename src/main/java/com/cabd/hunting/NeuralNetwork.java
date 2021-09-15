@@ -11,6 +11,7 @@ import static java.lang.Math.exp;
 
 public class NeuralNetwork {
 
+    private boolean ONLY_EXEC = false;
     private static double CrossOverRate;
     public int number_neurons[];
     public double synapses[][][][];
@@ -22,8 +23,10 @@ public class NeuralNetwork {
     private double randomMutationProbability;
     private double fits[];
     private int current_genome = 0;
+    private int maxHasProgressBeforeGiveUp = 40;
 
     private SaveLoad saveLoad;
+    private int hasProgressCount = 0;
 
     public NeuralNetwork(int number_neurons[], double min_weight, double max_weight, int genomes_per_generation, double randomMutationProbability, double CrossOverRate, SaveLoad saveLoad) {
         this.number_neurons = number_neurons;
@@ -45,6 +48,10 @@ public class NeuralNetwork {
         setBias();
         initSynapsesEmpty();
         initSynapsesRandomlyOrLoadTheBestGeneration();
+    }
+
+    public void setOnlyExec(boolean b){
+        ONLY_EXEC = b;
     }
 
     private void generateNeurons() {
@@ -148,12 +155,6 @@ public class NeuralNetwork {
                 }
             }
         }
-//        try {
-//            saveLoad.saveToFile();
-//        }
-//        catch(FileNotFoundException | UnsupportedEncodingException ex) {
-//            Logger.getLogger(NeuralNetwork.class.getName()).log(Level.SEVERE, null, ex);
-//        }
     }
 
     protected void initSynapsesRandomlyOrLoadTheBestGeneration() {
@@ -210,24 +211,39 @@ public class NeuralNetwork {
     private void newGeneration() {
         boolean hasProgress = false;
 
-        for(int i = 0; i < genomes_per_generation; i++) {
-            if(fits[i] > 0) {
-                hasProgress = true;
-                break;
+        if(saveLoad.fileExists() && ONLY_EXEC) {
+            try {
+                saveLoad.loadFromFile();
+            } catch(IOException ex) {
+                Logger.getLogger(NeuralNetwork.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }
-
-        if(hasProgress) {
-            initSynapsesCrossover();
         }else {
-            initSynapsesRandomlyOrLoadTheBestGeneration();
+            for (int i = 0; i < genomes_per_generation; i++) {
+                if (fits[i] > 0) {
+                    hasProgress = true;
+                    hasProgressCount++;
+                    break;
+                }
+            }
+
+            if (hasProgress && hasProgressCount < maxHasProgressBeforeGiveUp) {
+                initSynapsesCrossover();
+            } else {
+                hasProgressCount = 0;
+                initSynapsesRandomlyOrLoadTheBestGeneration();
+            }
         }
     }
 
     protected void initSynapsesCrossover() {
         // Sort
         sortTheBestGeneration();
-
+        try {
+            saveLoad.saveToFile();
+        }
+        catch(UnsupportedEncodingException ex) {
+            Logger.getLogger(NeuralNetwork.class.getName()).log(Level.SEVERE, null, ex);
+        }
         // The best genome is now the first. We mix it with all the other genomes
         double prob_rand;
         for(int genome = 1; genome < genomes_per_generation; genome++) {
@@ -268,12 +284,6 @@ public class NeuralNetwork {
                     }
                 }
             }
-        }
-        try {
-            saveLoad.saveToFile();
-        }
-        catch(FileNotFoundException | UnsupportedEncodingException ex) {
-            Logger.getLogger(NeuralNetwork.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

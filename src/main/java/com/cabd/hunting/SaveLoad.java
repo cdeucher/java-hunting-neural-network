@@ -1,5 +1,6 @@
 package com.cabd.hunting;
 
+import javax.annotation.processing.FilerException;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +19,7 @@ public class SaveLoad {
         return file.exists() && ! file.isDirectory();
     }
     
-    protected void saveToFile() throws FileNotFoundException, UnsupportedEncodingException {
+    protected synchronized  void saveToFile() throws UnsupportedEncodingException {
         try(PrintWriter writer = new PrintWriter(new FileOutputStream(file, true))) {
             // Append the current generation at the end of the file
             for(int l = 0; l < nn.genomes_per_generation; l++) {
@@ -39,10 +40,12 @@ public class SaveLoad {
                 }
             }
             writer.print("\n");
+        }catch (Exception ex){
+            new RuntimeException(" Cant save the file:"+ ex);
         }
     }
     
-    protected void loadFromFile() throws FileNotFoundException, IOException {
+    protected synchronized void loadFromFile() throws FileNotFoundException, IOException {
         List<String> values = loadBetterGenerationFromFile();
 
         int n = 0;
